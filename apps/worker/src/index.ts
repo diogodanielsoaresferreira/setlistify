@@ -92,7 +92,6 @@ type CreatePlaylistBody = {
   songs: string[];
 };
 
-
 function parseBearer(authHeader: string | null | undefined): string | null {
   if (!authHeader) return null;
   const m = authHeader.match(/^Bearer\s+(.+)$/i);
