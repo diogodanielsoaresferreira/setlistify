@@ -5,10 +5,11 @@ import worker from '../src/index'
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>
 
 describe('POST /api/spotify/playlist', () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: any
 
   beforeEach(() => {
-    fetchSpy = vi.spyOn(globalThis as any, 'fetch').mockImplementation(async (input: any, init?: RequestInit) => {
+    fetchSpy = (vi.spyOn(globalThis as any, 'fetch') as any).mockImplementation(async (...args: any[]) => {
+      const [input, init] = args as [any, RequestInit | undefined]
       const url = typeof input === 'string' ? input : input.url
       // Auth check
       if (url.endsWith('/v1/me')) {
