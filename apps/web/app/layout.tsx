@@ -13,12 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <p style={{ margin: '8px 0 0 0', color: '#555' }}>Cloudflare Worker + Next.js UI</p>
           </header>
           {children}
-          <footer style={{ marginTop: 40, color: '#777', fontSize: 12 }}>
-            <p>Tip: set NEXT_PUBLIC_API_BASE if your API is on another domain.</p>
-          </footer>
         </div>
       </body>
     </html>
   );
 }
-

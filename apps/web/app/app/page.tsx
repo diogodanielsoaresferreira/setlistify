@@ -3,9 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-// Default to local Worker dev server; override via NEXT_PUBLIC_API_BASE in prod
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8787'
-
 type SetlistResponse = { artist: string; setlist: string[]; error?: string }
 type PlaylistResponse = { playlistId: string; playlistUrl?: string; addedCount: number; notFound: string[]; error?: string }
 
@@ -50,7 +47,11 @@ export default function AppPage() {
     })()
   }, [])
 
-  // No client-side redirects; render a login prompt if unauthenticated
+  // Redirect to login if unauthenticated (now that PKCE is stable)
+  useEffect(() => {
+    if (!authChecked) return
+    if (!isAuthed) router.replace('/')
+  }, [authChecked, isAuthed, router])
 
   // Persist minimal UI state across reloads
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function AppPage() {
     } catch {}
   }, [artist, songs, title])
 
+  // Logout handler (unused in UI, can be wired if needed)
   const logoutSpotify = useCallback(async () => {
     try { await fetch('/api/auth/spotify/logout', { method: 'POST' }) } catch {}
     router.replace('/')
@@ -118,17 +120,6 @@ export default function AppPage() {
 
   return (
     <main>
-      {isAuthed ? (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ color: 'green' }}>Authenticated with Spotify</span>
-          <button onClick={logoutSpotify} style={{ padding: '6px 10px', borderRadius: 8 }}>Log out</button>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ color: '#a00' }}>Not authenticated</span>
-          <a href="/api/auth/spotify/login" style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #ccc' }}>Log in</a>
-        </div>
-      )}
 
       <section style={{ display: 'grid', gap: 16 }}>
         <div style={{ display: 'grid', gap: 8 }}>
@@ -169,7 +160,6 @@ export default function AppPage() {
         <button onClick={createPlaylist} disabled={!isAuthed || !title || !artist || creating} style={{ padding: '10px 14px', borderRadius: 8 }}>
           {creating ? 'Creating…' : 'Create playlist from setlist'}
         </button>
-        {!!isAuthed && !artist && <small style={{ color: '#666' }}>Enter an artist name</small>}
         {playlistError && <div style={{ color: 'crimson' }}>{playlistError}</div>}
         {playlist && (
           <div style={{ background: '#f6f6f6', padding: 12, borderRadius: 8 }}>
