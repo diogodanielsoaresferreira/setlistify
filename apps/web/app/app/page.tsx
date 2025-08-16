@@ -1,0 +1,186 @@
+'use client'
+
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+// Default to local Worker dev server; override via NEXT_PUBLIC_API_BASE in prod
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8787'
+
+type SetlistResponse = { artist: string; setlist: string[]; error?: string }
+type PlaylistResponse = { playlistId: string; playlistUrl?: string; addedCount: number; notFound: string[]; error?: string }
+
+export default function AppPage() {
+  const router = useRouter()
+  const [authChecked, setAuthChecked] = useState(false)
+  const [isAuthed, setIsAuthed] = useState(false)
+
+  const [artist, setArtist] = useState('')
+  const [loadingSetlist, setLoadingSetlist] = useState(false)
+  const [songs, setSongs] = useState<string[]>([])
+  const [setlistError, setSetlistError] = useState<string | null>(null)
+
+  const [title, setTitle] = useState('My Setlist Playlist')
+  const [creating, setCreating] = useState(false)
+  const [playlist, setPlaylist] = useState<PlaylistResponse | null>(null)
+  const [playlistError, setPlaylistError] = useState<string | null>(null)
+
+  const notFoundCount = useMemo(() => playlist?.notFound?.length ?? 0, [playlist])
+  const hasSetlist = songs.length > 0
+
+  // Check session via server (HttpOnly cookie) and hydrate UI state
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/spotify/me', { cache: 'no-store' })
+        setIsAuthed(res.ok)
+      } catch {
+        setIsAuthed(false)
+      }
+      // hydrate cached UI state
+      try {
+        const rawState = localStorage.getItem('setlistify_state')
+        if (rawState) {
+          const s = JSON.parse(rawState) as Partial<{ artist: string; songs: string[]; title: string }>
+          if (s.artist) setArtist(s.artist)
+          if (Array.isArray(s.songs)) setSongs(s.songs)
+          if (s.title) setTitle(s.title)
+        }
+      } catch {}
+      setAuthChecked(true)
+    })()
+  }, [])
+
+  // No client-side redirects; render a login prompt if unauthenticated
+
+  // Persist minimal UI state across reloads
+  useEffect(() => {
+    try {
+      localStorage.setItem('setlistify_state', JSON.stringify({ artist, songs, title }))
+    } catch {}
+  }, [artist, songs, title])
+
+  const logoutSpotify = useCallback(async () => {
+    try { await fetch('/api/auth/spotify/logout', { method: 'POST' }) } catch {}
+    router.replace('/')
+  }, [router])
+
+  const fetchSetlist = useCallback(async () => {
+    setSetlistError(null)
+    setSongs([])
+    setLoadingSetlist(true)
+    try {
+      const res = await fetch(`/api/worker/setlist/${encodeURIComponent(artist)}`)
+      const json: SetlistResponse = await res.json()
+      if (!res.ok || (json as any).error) {
+        throw new Error((json as any).error || `Request failed: ${res.status}`)
+      }
+      setSongs(json.setlist || [])
+    } catch (e: any) {
+      setSetlistError(e?.message || 'Failed to fetch setlist')
+    } finally {
+      setLoadingSetlist(false)
+    }
+  }, [artist])
+
+  const fetchSetlistForCreate = useCallback(async (): Promise<string[]> => {
+    const res = await fetch(`/api/worker/setlist/${encodeURIComponent(artist)}`)
+    const json: SetlistResponse = await res.json()
+    if (!res.ok || (json as any).error) {
+      throw new Error((json as any).error || `Request failed: ${res.status}`)
+    }
+    return json.setlist || []
+  }, [artist])
+
+  const createPlaylist = useCallback(async () => {
+    setPlaylist(null)
+    setPlaylistError(null)
+    setCreating(true)
+    try {
+      const songsToUse = songs.length > 0 ? songs : await fetchSetlistForCreate()
+      const res = await fetch(`/api/worker/spotify/playlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, artist, songs: songsToUse }),
+      })
+      const json: PlaylistResponse = await res.json()
+      if (!res.ok || (json as any).error) {
+        throw new Error((json as any).error || `Request failed: ${res.status}`)
+      }
+      setPlaylist(json)
+    } catch (e: any) {
+      setPlaylistError(e?.message || 'Failed to create playlist')
+    } finally {
+      setCreating(false)
+    }
+  }, [artist, songs, title, fetchSetlistForCreate])
+
+  if (!authChecked) return <main><p>Loading…</p></main>
+
+  return (
+    <main>
+      {isAuthed ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ color: 'green' }}>Authenticated with Spotify</span>
+          <button onClick={logoutSpotify} style={{ padding: '6px 10px', borderRadius: 8 }}>Log out</button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ color: '#a00' }}>Not authenticated</span>
+          <a href="/api/auth/spotify/login" style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #ccc' }}>Log in</a>
+        </div>
+      )}
+
+      <section style={{ display: 'grid', gap: 16 }}>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <label htmlFor="artist">Artist</label>
+          <input
+            id="artist"
+            value={artist}
+            onChange={e => setArtist(e.target.value)}
+            placeholder="e.g. Red Hot Chili Peppers"
+            style={{ padding: 10, borderRadius: 8, border: '1px solid #ccc' }}
+          />
+          <button onClick={fetchSetlist} disabled={!artist || loadingSetlist} style={{ padding: '10px 14px', borderRadius: 8 }}>
+            {loadingSetlist ? 'Loading…' : 'Fetch last setlist'}
+          </button>
+          {setlistError && <div style={{ color: 'crimson' }}>{setlistError}</div>}
+        </div>
+
+        {hasSetlist && (
+          <div style={{ display: 'grid', gap: 8 }}>
+            <h3 style={{ margin: '12px 0 4px 0' }}>Songs</h3>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {songs.map((s, i) => (
+                <li key={`${s}-${i}`}>{s}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <hr style={{ margin: '24px 0' }} />
+
+      <section style={{ display: 'grid', gap: 12 }}>
+        <h2 style={{ margin: 0 }}>Create Spotify Playlist</h2>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <label htmlFor="title">Title</label>
+          <input id="title" value={title} onChange={e => setTitle(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #ccc' }} />
+        </div>
+        <button onClick={createPlaylist} disabled={!isAuthed || !title || !artist || creating} style={{ padding: '10px 14px', borderRadius: 8 }}>
+          {creating ? 'Creating…' : 'Create playlist from setlist'}
+        </button>
+        {!!isAuthed && !artist && <small style={{ color: '#666' }}>Enter an artist name</small>}
+        {playlistError && <div style={{ color: 'crimson' }}>{playlistError}</div>}
+        {playlist && (
+          <div style={{ background: '#f6f6f6', padding: 12, borderRadius: 8 }}>
+            <div>Playlist created!</div>
+            <div>Tracks added: {playlist.addedCount} {!!notFoundCount && `(not found: ${notFoundCount})`}</div>
+            {playlist.playlistUrl && (
+              <a href={playlist.playlistUrl} target="_blank" rel="noreferrer">Open in Spotify</a>
+            )}
+          </div>
+        )}
+      </section>
+    </main>
+  )
+}

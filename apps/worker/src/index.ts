@@ -12,9 +12,18 @@
  */
 
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 
 // Create Hono app with typed bindings matching your Env
 const app = new Hono<{ Bindings: Env }>();
+
+// CORS for browser clients (Next.js dev on :3000, etc.)
+app.use('*', cors({
+  origin: (origin) => origin ?? '*',
+  allowMethods: ['GET', 'POST', 'OPTIONS'],
+  allowHeaders: ['Authorization', 'Content-Type'],
+  maxAge: 86400,
+}));
 
 
 // New API endpoint: GET /api/setlist/:artist
