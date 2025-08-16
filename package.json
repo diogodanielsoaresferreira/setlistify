@@ -3,18 +3,20 @@
 	"version": "0.0.0",
 	"private": true,
 	"dependencies": {
+		"@vercel/analytics": "^1.5.0",
+		"@vercel/speed-insights": "^1.2.0",
 		"hono": "^4.5.7"
 	},
-  "scripts": {
+	"scripts": {
 		"deploy": "wrangler deploy -c apps/worker/wrangler.jsonc",
 		"dev": "wrangler dev -c apps/worker/wrangler.jsonc",
 		"start": "wrangler dev -c apps/worker/wrangler.jsonc",
 		"test": "vitest -c apps/worker/vitest.config.mts",
-    "cf-typegen": "bash -lc 'cd apps/worker && wrangler types'",
-    "web:dev": "npm --prefix apps/web run dev",
-    "web:build": "npm --prefix apps/web run build",
-    "web:start": "npm --prefix apps/web run start"
-  },
+		"cf-typegen": "bash -lc 'cd apps/worker && wrangler types'",
+		"web:dev": "npm --prefix apps/web run dev",
+		"web:build": "npm --prefix apps/web run build",
+		"web:start": "npm --prefix apps/web run start"
+	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"typescript": "^5.5.2",
