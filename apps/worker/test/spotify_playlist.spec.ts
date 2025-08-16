@@ -90,7 +90,7 @@ describe('POST /api/spotify/playlist', () => {
     const res = await worker.fetch(req, {} as any, ctx)
     await waitOnExecutionContext(ctx)
     expect(res.status).toBe(201)
-    const json = await res.json()
+    const json = await res.json() as any
     expect(json).toMatchObject({
       playlistId: 'pl123',
       playlistUrl: 'https://open.spotify.com/playlist/pl123',
