@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
   }
   const json = await tokenRes.json() as any
   const accessToken = json?.access_token as string | undefined
+  const refreshToken = json?.refresh_token as string | undefined
   const expiresIn = Number(json?.expires_in || 3600)
   if (!accessToken) return new NextResponse('No access_token in response', { status: 400 })
 
@@ -46,6 +47,16 @@ export async function GET(req: NextRequest) {
     path: '/',
     maxAge: Math.max(60, expiresIn - 60),
   })
+  if (refreshToken) {
+    // Refresh tokens can be long-lived; rotate if Spotify returns a new one later
+    res.cookies.set('spotify_refresh_token', refreshToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    })
+  }
   // Clear PKCE verifier
   res.cookies.set('spotify_pkce_verifier', '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 0 })
   return res

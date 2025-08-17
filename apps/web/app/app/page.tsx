@@ -148,6 +148,10 @@ export default function AppPage() {
           console.error('Failed to parse playlist JSON response', err)
         }
       }
+      if (res.status === 401) {
+        setPlaylistError('Your Spotify session has expired. Please log in again.')
+        return
+      }
       if (!json) {
         throw new Error('Failed to create playlist. Please try again.')
       }
@@ -202,7 +206,18 @@ export default function AppPage() {
         <button onClick={createPlaylist} disabled={!isAuthed || !artist || creating} style={{ padding: '10px 14px', borderRadius: 8 }}>
           {creating ? 'Creating…' : 'Create playlist from setlist'}
         </button>
-        {playlistError && <div style={{ color: 'crimson' }}>{playlistError}</div>}
+        {playlistError && (
+          <div style={{ color: 'crimson' }}>
+            {playlistError}
+            {playlistError.toLowerCase().includes('expired') && (
+              <div style={{ marginTop: 8 }}>
+                <button type="button" onClick={() => { window.location.href = '/api/auth/spotify/login' }} style={{ padding: '8px 12px', borderRadius: 6 }}>
+                  Log in with Spotify
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         {playlist && (
           <div style={{ background: '#f6f6f6', padding: 12, borderRadius: 8 }}>
             <div>Playlist created!</div>
