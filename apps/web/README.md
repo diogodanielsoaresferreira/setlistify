@@ -47,3 +47,4 @@ Notes
 -----
 - Use the exact same host in your browser as in `SPOTIFY_REDIRECT_URI` (e.g. 127.0.0.1 vs localhost) so cookies work.
 - Recommended to set `SPOTIFY_REDIRECT_URI` to `/api/auth/spotify/callback`. A compatibility shim exists at `/spotify/callback`, but using `/api/auth/spotify/callback` avoids an extra hop.
+
