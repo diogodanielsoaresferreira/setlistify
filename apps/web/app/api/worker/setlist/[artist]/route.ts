@@ -6,6 +6,5 @@ export async function GET(_req: NextRequest, { params }: { params: { artist: str
   const artist = params.artist
   const resp = await fetch(`${API_BASE}/api/setlist/${encodeURIComponent(artist)}`)
   const text = await resp.text()
-  return new NextResponse(text, { status: resp.status, headers: { 'content-type': resp.headers.get('content-type') || 'application/json' } })
+  return new NextResponse(text, { status: resp.status, headers: { 'content-type': resp.headers.get('content-type') || 'text/plain; charset=utf-8' } })
 }
-

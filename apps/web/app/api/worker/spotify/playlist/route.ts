@@ -13,6 +13,5 @@ export async function POST(req: NextRequest) {
     body,
   })
   const text = await resp.text()
-  return new NextResponse(text, { status: resp.status, headers: { 'content-type': resp.headers.get('content-type') || 'application/json' } })
+  return new NextResponse(text, { status: resp.status, headers: { 'content-type': resp.headers.get('content-type') || 'text/plain; charset=utf-8' } })
 }
-
