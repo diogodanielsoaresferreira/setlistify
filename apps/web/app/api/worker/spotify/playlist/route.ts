@@ -9,7 +9,6 @@ export async function POST(req: NextRequest) {
   const buildResponse = async (resp: Response, cookies?: { accessToken?: { value: string; maxAge: number }, refreshToken?: { value: string; maxAge: number } }) => {
     const text = await resp.text()
     const out = new NextResponse(text, { status: resp.status, headers: { 'content-type': resp.headers.get('content-type') || 'application/json' } })
-    const cookieDomain = process.env.SPOTIFY_COOKIE_DOMAIN
     if (cookies?.accessToken) {
       out.cookies.set('spotify_access_token', cookies.accessToken.value, {
         httpOnly: true,
@@ -17,7 +16,6 @@ export async function POST(req: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         path: '/',
         maxAge: cookies.accessToken.maxAge,
-        ...(cookieDomain ? { domain: cookieDomain } : {}),
       })
     }
     if (cookies?.refreshToken) {
@@ -27,7 +25,6 @@ export async function POST(req: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         path: '/',
         maxAge: cookies.refreshToken.maxAge,
-        ...(cookieDomain ? { domain: cookieDomain } : {}),
       })
     }
     return out

@@ -154,7 +154,7 @@ export default function AppPage() {
         return
       }
       if (res.status === 403) {
-        setPlaylistError('This Spotify account is not authorized to use this app yet. Please contact the app owner to be added or try a different Spotify login method.')
+        setPlaylistError('This Spotify account is not authorized to use this app yet. Please email diogodsferreira@gmail.com to request access.')
         return
       }
       if (!json) {

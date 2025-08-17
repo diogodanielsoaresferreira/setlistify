@@ -30,14 +30,12 @@ export async function POST(req: NextRequest) {
   if (!accessToken) return new NextResponse('No access_token in refresh', { status: 401 })
 
   const res = NextResponse.json({ ok: true })
-  const cookieDomain = process.env.SPOTIFY_COOKIE_DOMAIN
   res.cookies.set('spotify_access_token', accessToken, {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: Math.max(60, expiresIn - 60),
-    ...(cookieDomain ? { domain: cookieDomain } : {}),
   })
   if (newRefreshToken) {
     res.cookies.set('spotify_refresh_token', newRefreshToken, {
@@ -46,7 +44,6 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24 * 30,
-      ...(cookieDomain ? { domain: cookieDomain } : {}),
     })
   }
   return res

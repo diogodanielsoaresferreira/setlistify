@@ -31,7 +31,6 @@ Set these in your environment (e.g. apps/web/.env.local or Vercel → Project Se
   - Prod: `https://<your-domain>/api/auth/spotify/callback`
   Add this exact value in Spotify Dashboard → Your App → Edit Settings → Redirect URIs.
 - `WORKER_API_BASE` (optional): Your Cloudflare Worker base URL; defaults to `http://localhost:8787` in dev.
-- `SPOTIFY_COOKIE_DOMAIN` (optional, recommended in prod): Domain attribute for cookies, e.g. `.example.com` so cookies work across `www` and apex.
 
 Deploy on Vercel
 ----------------
@@ -47,8 +46,5 @@ Deploy on Vercel
 Notes
 -----
 - Use the exact same host in your browser as in `SPOTIFY_REDIRECT_URI` (e.g. 127.0.0.1 vs localhost) so cookies work.
-- If users still see “session expired” right after login, ensure:
-  - They open the exact domain that matches the callback host.
-  - `SPOTIFY_COOKIE_DOMAIN` is set (e.g. `.yourdomain.com`) if you serve both `www` and apex.
-  - Re-login once to obtain a refresh token (we force consent via `show_dialog=true`).
+- If users still see “session expired” right after login, ensure they open the exact domain that matches the callback host and re-login once to obtain a refresh token (we force consent via `show_dialog=true`).
 - Recommended to set `SPOTIFY_REDIRECT_URI` to `/api/auth/spotify/callback`. A compatibility shim exists at `/spotify/callback`, but using `/api/auth/spotify/callback` avoids an extra hop.
