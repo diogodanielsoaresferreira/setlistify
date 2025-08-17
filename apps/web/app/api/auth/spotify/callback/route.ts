@@ -40,12 +40,14 @@ export async function GET(req: NextRequest) {
   if (!accessToken) return new NextResponse('No access_token in response', { status: 400 })
 
   const res = NextResponse.redirect(`${url.origin}/app`)
+  const cookieDomain = process.env.SPOTIFY_COOKIE_DOMAIN
   res.cookies.set('spotify_access_token', accessToken, {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: Math.max(60, expiresIn - 60),
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
   })
   if (refreshToken) {
     // Refresh tokens can be long-lived; rotate if Spotify returns a new one later
@@ -55,9 +57,10 @@ export async function GET(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24 * 30, // 30 days
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     })
   }
   // Clear PKCE verifier
-  res.cookies.set('spotify_pkce_verifier', '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 0 })
+  res.cookies.set('spotify_pkce_verifier', '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 0, ...(cookieDomain ? { domain: cookieDomain } : {}) })
   return res
 }

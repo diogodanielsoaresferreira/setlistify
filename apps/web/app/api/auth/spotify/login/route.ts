@@ -43,6 +43,8 @@ export async function GET(req: NextRequest) {
     code_challenge: challenge,
     scope: 'playlist-modify-private',
     state: Math.random().toString(36).slice(2),
+    // Force consent so Spotify issues/rotates refresh_token if missing
+    show_dialog: 'true',
   })
 
   const res = NextResponse.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`)
