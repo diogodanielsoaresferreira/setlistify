@@ -121,10 +121,16 @@ app.post('/api/spotify/playlist', async (c) => {
 
   const authHeaders = { Authorization: `Bearer ${token}` };
 
-  // Verify token with /me
+  // Verify token with /me (propagate meaningful errors)
   const meRes = await fetch(`${SPOTIFY_API}/me`, { headers: authHeaders });
-  if (!meRes.ok) {
+  if (meRes.status === 401) {
     return c.json({ error: 'Invalid or expired Spotify token' }, 401);
+  }
+  if (meRes.status === 403) {
+    return c.json({ error: 'Spotify account not authorized for this app' }, 403);
+  }
+  if (!meRes.ok) {
+    return c.json({ error: `Spotify /me failed (${meRes.status})` }, 502);
   }
   const me = await meRes.json() as { id: string };
   const userId = (me as any)?.id;

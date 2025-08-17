@@ -153,6 +153,10 @@ export default function AppPage() {
         setPlaylistError('Your Spotify session has expired. Please log in again.')
         return
       }
+      if (res.status === 403) {
+        setPlaylistError('This Spotify account is not authorized to use this app yet. Please contact the app owner to be added or try a different Spotify login method.')
+        return
+      }
       if (!json) {
         throw new Error('Failed to create playlist. Please try again.')
       }
