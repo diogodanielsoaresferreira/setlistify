@@ -5,7 +5,7 @@
 	"dependencies": {
 		"@vercel/analytics": "^1.5.0",
 		"@vercel/speed-insights": "^1.2.0",
-		"hono": "^4.5.7"
+		"hono": "^4.9.6"
 	},
 	"scripts": {
 		"deploy": "wrangler deploy -c apps/worker/wrangler.jsonc",
@@ -18,7 +18,7 @@
 		"web:start": "npm --prefix apps/web run start"
 	},
 	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"@cloudflare/vitest-pool-workers": "^0.8.69",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
 		"wrangler": "^4.30.0"
